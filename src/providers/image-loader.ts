@@ -19,6 +19,7 @@ interface QueueItem {
 }
 
 declare const Ionic: any;
+declare var cordova;
 
 @Injectable()
 export class ImageLoader {
@@ -328,34 +329,55 @@ export class ImageLoader {
         const localDir = this.getFileCacheDirectory() + this.config.cacheDirectoryName + '/';
         const fileName = this.createFileName(currentItem.imageUrl);
 
-        this.http.get(currentItem.imageUrl, {
-          responseType: 'blob',
-          headers: this.config.httpHeaders
-        }).subscribe(
-          (data: Blob) => {
-            this.file.writeFile(localDir, fileName, data, {replace: true}).then((file: FileEntry) => {
-              if (this.isCacheSpaceExceeded) {
-                this.maintainCacheSize();
-              }
-              this.addFileToIndex(file).then(() => {
-                this.getCachedImagePath(currentItem.imageUrl).then((localUrl) => {
-                  currentItem.resolve(localUrl);
-                  resolve();
-                  done();
-                  this.maintainCacheSize();
-                });
-              });
-            }).catch((e) => {
-              //Could not write image
-              error(e);
-              reject(e);
-            });
-          },
-          (e) => {
-            //Could not get image via httpClient
-            error(e);
-            reject(e);
-          });
+				if (cordova && cordova.plugin && cordova.plugin.http) {
+					cordova.plugin.http.downloadFile(currentItem.imageUrl, {}, this.config.httpHeaders, localDir + fileName,
+						(file: FileEntry) => {
+							if (this.isCacheSpaceExceeded) {
+								this.maintainCacheSize();
+							} this.addFileToIndex(file).then(() => {
+								this.getCachedImagePath(currentItem.imageUrl).then((localUrl) => {
+									currentItem.resolve(localUrl);
+									resolve();
+									done();
+									this.maintainCacheSize();
+								});
+							});
+						}, (e) => {
+							//Could not get image via Native HTTP module
+							error(e);
+							reject(e);
+						});
+				} else {
+					this.http.get(currentItem.imageUrl, {
+						responseType: 'blob',
+						headers: this.config.httpHeaders
+					}).subscribe(
+						(data: Blob) => {
+							this.file.writeFile(localDir, fileName, data, { replace: true }).then((file: FileEntry) => {
+								if (this.isCacheSpaceExceeded) {
+									this.maintainCacheSize();
+								}
+								this.addFileToIndex(file).then(() => {
+									this.getCachedImagePath(currentItem.imageUrl).then((localUrl) => {
+										currentItem.resolve(localUrl);
+										resolve();
+										done();
+										this.maintainCacheSize();
+									});
+								});
+							}).catch((e) => {
+								//Could not write image
+								error(e);
+								reject(e);
+							});
+						},
+						(e) => {
+							//Could not get image via httpClient
+							error(e);
+							reject(e);
+						});
+				}
+
         },
       );
     } else {
