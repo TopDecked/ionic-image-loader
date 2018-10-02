@@ -373,7 +373,9 @@ var ImageLoader = (function () {
                     _this.processQueue();
                 var localDir = _this.getFileCacheDirectory() + _this.config.cacheDirectoryName + '/';
                 var fileName = _this.createFileName(currentItem.imageUrl);
+                console.log("Checking for http plugin");
                 if (cordova && cordova.plugin && cordova.plugin.http) {
+                    console.log("Downloading with http plugin");
                     cordova.plugin.http.downloadFile(currentItem.imageUrl, {}, _this.config.httpHeaders, localDir + fileName, function (file) {
                         if (_this.isCacheSpaceExceeded) {
                             _this.maintainCacheSize();
@@ -393,6 +395,7 @@ var ImageLoader = (function () {
                     });
                 }
                 else {
+                    console.log("Downloading with httpClient");
                     _this.http.get(currentItem.imageUrl, {
                         responseType: 'blob',
                         headers: _this.config.httpHeaders
