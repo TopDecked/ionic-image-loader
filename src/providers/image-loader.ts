@@ -334,11 +334,18 @@ export class ImageLoader {
           console.log("Downloading with http plugin")
 					cordova.plugin.http.downloadFile(currentItem.imageUrl, {}, this.config.httpHeaders, localDir + fileName,
 						(file: FileEntry) => {
+              console.log("Downloaded with http plugin", file)
 							if (this.isCacheSpaceExceeded) {
+                console.log("Cache too large")
 								this.maintainCacheSize();
-							} this.addFileToIndex(file).then(() => {
+							}
+
+              this.addFileToIndex(file).then(() => {
+                console.log("Added to index", file)
 								this.getCachedImagePath(currentItem.imageUrl).then((localUrl) => {
+                  console.log("Local URL", localUrl);
 									currentItem.resolve(localUrl);
+                  console.log("Done", this);
 									resolve();
 									done();
 									this.maintainCacheSize();
@@ -346,6 +353,7 @@ export class ImageLoader {
 							});
 						}, (e) => {
 							//Could not get image via Native HTTP module
+              console.error("Failed to load with http plugin", e);
 							error(e);
 							reject(e);
 						});
