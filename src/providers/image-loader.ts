@@ -329,7 +329,9 @@ export class ImageLoader {
         const localDir = this.getFileCacheDirectory() + this.config.cacheDirectoryName + '/';
         const fileName = this.createFileName(currentItem.imageUrl);
 
+          console.log("Checking for http plugin")
 				if (cordova && cordova.plugin && cordova.plugin.http) {
+          console.log("Downloading with http plugin")
 					cordova.plugin.http.downloadFile(currentItem.imageUrl, {}, this.config.httpHeaders, localDir + fileName,
 						(file: FileEntry) => {
 							if (this.isCacheSpaceExceeded) {
@@ -348,6 +350,7 @@ export class ImageLoader {
 							reject(e);
 						});
 				} else {
+          console.log("Downloading with httpClient")
 					this.http.get(currentItem.imageUrl, {
 						responseType: 'blob',
 						headers: this.config.httpHeaders
