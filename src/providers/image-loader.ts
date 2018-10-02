@@ -6,6 +6,8 @@ import { Platform } from 'ionic-angular';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/first';
 
+declare var window:any;
+
 interface IndexItem {
   name: string;
   modificationTime: Date;
@@ -70,7 +72,7 @@ export class ImageLoader {
   }
 
   private get isIonicWKWebView(): boolean {
-    return this.isWKWebView && (location.host === 'localhost:8080' || (<any>window).LiveReload);
+    return (this.platform.is('android') || this.isWKWebView) && (location.host === 'localhost:8080' || (<any>window).LiveReload);
   }
 
   constructor(
@@ -462,12 +464,10 @@ export class ImageLoader {
             // in this case only the tempDirectory is accessible,
             // therefore the file needs to be copied into that directory first!
             if (this.isIonicWKWebView) {
-
               // Ionic WKWebView can access all files, but we just need to replace file:/// with http://localhost:8080/
-              resolve(fileEntry.nativeURL.replace('file:///', 'http://localhost:8080/'));
+              resolve(window.Ionic.WebView.convertFileSrc(fileEntry.nativeURL));
 
             } else if (this.isWKWebView) {
-
               // check if file already exists in temp directory
               this.file.resolveLocalFilesystemUrl(tempDirPath + '/' + fileName)
                 .then((tempFileEntry: FileEntry) => {
@@ -576,7 +576,10 @@ export class ImageLoader {
    */
   private createFileName(url: string): string {
     // hash the url to get a unique file name
-    return this.hashString(url).toString();
+    const extension = url.replace(/.*(\.\w{3,4})($|.*\?.*$)/i,"$1")
+    const filename = this.hashString(url).toString();
+    const result = filename + (extension !== filename ? extension : "");
+    return result;
   }
 
   /**
